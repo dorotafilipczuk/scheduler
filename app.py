@@ -1,12 +1,15 @@
 from datetime import datetime
 import json
 import os
+import re
 import sys
 
 from dotenv import load_dotenv
 from flask import Flask, request, current_app, url_for, redirect, jsonify
 import requests
 from rauth import OAuth2Service
+
+DATE_REGEX = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 if os.path.exists(dotenv_path):
@@ -109,7 +112,37 @@ def oauth_callback(provider):
     """
     oauth = OAuthSignIn.get_provider(provider)
     oauth.callback()
-    return jsonify({'data': oauth.session.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))).json()})
+    response = oauth.session.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}&singleEvents=true'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))).json()
+
+    calendar_events = []
+
+    if response.get('kind', '') == 'calendar#events':
+        for item in response['items']:
+            print(item)
+            event = {}
+            try:
+                event['start'] = item['start']['date']
+                if DATE_REGEX.fullmatch(event['start']) is not None:
+                    # Its a date
+                    event['start'] = event['start'] + 'T00:00:00Z'
+                event['end'] = item['end']['date']
+                if DATE_REGEX.fullmatch(event['end']) is not None:
+                    # Its a date
+                    event['end'] = event['end'] + 'T23:59:59Z'
+
+
+            except KeyError:
+                event['start'] = item['start']['dateTime']
+                if DATE_REGEX.fullmatch(event['start']) is not None:
+                    # Its a date
+                    event['start'] = event['start'] + 'T00:00:00Z'
+                event['end'] = item['end']['dateTime']
+                if DATE_REGEX.fullmatch(event['end']) is not None:
+                    # Its a date
+                    event['end'] = event['end'] + 'T23:59:59Z'
+            calendar_events.append(event)
+
+    return jsonify({'events': calendar_events}) #### Use the dict inside the parenthesis for dict
 
 
 @app.route('/authorize/<string:provider>/')
