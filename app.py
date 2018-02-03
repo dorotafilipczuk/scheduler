@@ -1,10 +1,56 @@
+from datetime import datetime
 import json
 import os
+import sys
 
-from flask import Flask, Response, request
+from flask import Flask, request, current_app, url_for
+import requests
+
+
+class Config(object):
+    OAUTH_CREDENTIALS = {
+        'google': {
+            'id': os.environ['GOOGLE_ID'],
+            'secret': os.environ['GOOGLE']
+        }
+    }
+
+
+class OAuthSignIn(object):
+    providers = None
+
+    def __init__(self, provider_name):
+        self.provider_name = provider_name
+        credentials = current_app.config['OAUTH_CREDENTIALS'][provider_name]
+        self.consumer_id = credentials['id']
+        self.consumer_secret = credentials['secret']
+
+    def authorize(self):
+        pass
+
+    def callback(self):
+        pass
+
+    def get_callback_url(self):
+        return url_for('oauth_callback', provider=self.provider_name,
+                       _external=True)
+
+    @classmethod
+    def get_provider(self, provider_name):
+        if self.providers is None:
+            self.providers = {}
+            for provider_class in self.__subclasses__():
+                provider = provider_class()
+                self.providers[provider.provider_name] = provider
+        return self.providers[provider_name]
+
+
+class GoogleSignIn(OAuthSignIn):
+    pass
 
 
 app = Flask(__name__)
+app.config.from_object()
 
 
 @app.route('/')
@@ -17,6 +63,7 @@ def index():
         return request.args["hub.challenge"], 200
 
     return "Hello world", 200
+
 
 def send_message(recipient_id, message_text):
 
@@ -47,13 +94,11 @@ def log(msg, *args, **kwargs):  # simple wrapper for logging to stdout on heroku
         if type(msg) is dict:
             msg = json.dumps(msg)
         else:
-            msg = unicode(msg).format(*args, **kwargs)
-        print u"{}: {}".format(datetime.now(), msg)
+            msg = str(msg).format(*args, **kwargs)
+        print(u"{}: {}".format(datetime.now(), msg))
     except UnicodeEncodeError:
         pass  # squash logging errors in case of non-ascii text
     sys.stdout.flush()
-
-
 
 
 @app.route('/callback')
