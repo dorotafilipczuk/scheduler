@@ -2,6 +2,8 @@ from datetime import datetime
 import json
 import os
 import sys
+from pprint import pprint
+import json
 
 from dotenv import load_dotenv
 from flask import Flask, request, current_app, url_for, redirect
@@ -149,6 +151,10 @@ def webhook():
 
     return "ok", 200
 
+def get_options():
+    data = json.load(open('user1.json'))
+    pprint(data)
+
 
 def send_message(recipient_id, message_text):
 
@@ -170,7 +176,6 @@ def send_message(recipient_id, message_text):
             {
               "content_type":"text",
               "title":"BUTTON_TEXT",
-              "image_url":"http://example.com/img/red.png",
               "payload":"STRING_SENT_TO_WEBHOOK"
             }]
         }
