@@ -4,7 +4,7 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from flask import Flask, request, current_app, url_for, redirect
+from flask import Flask, request, current_app, url_for, redirect, jsonify
 import requests
 from rauth import OAuth2Service
 
@@ -82,26 +82,45 @@ class GoogleSignIn(OAuthSignIn):
         ))
 
     def callback(self):
-        print(request)
+        def decode_json(payload):
+            return json.loads(payload.decode('utf-8'))
+        error = request.args.get('error')
+        if error is not None:
+            pass  # User did not give us access
+
+        code = request.args.get('code')
+
+        session = self.service.get_auth_session(
+            data={'code': code,
+                   'grant_type': 'authorization_code',
+                   'redirect_uri': self.get_callback_url()
+                    },
+            decoder=json.loads
+        )
+
+        temp = session.get('https://www.googleapis.com/calendar/v3/users/me/calendarList').json()
+        print(temp)
 
 
 
 app = Flask(__name__)
 app.config.from_object(Config())
 
-@app.route('/callback/<provider>')
+
+@app.route('/callback/<provider>/')
 def oauth_callback(provider):
     """
     Route used by google to authenticate a user
     """
     oauth = OAuthSignIn.get_provider(provider)
     oauth.callback()
+    return jsonify({'data': oauth.session.request('/users/me/calendarList')})
 
 
-@app.route('/authorize/google')
-def google_authorize():
+@app.route('/authorize/<string:provider>/')
+def authorize(provider):
     # TODO: Check user is already signed in
-    oauth = OAuthSignIn.get_provider('google') # TODO: Other calendar providers
+    oauth = OAuthSignIn.get_provider(provider)  # TODO: Other calendar providers
     return oauth.authorize()
 
 
@@ -191,8 +210,6 @@ def log(msg, *args, **kwargs):  # simple wrapper for logging to stdout on heroku
     except UnicodeEncodeError:
         pass  # squash logging errors in case of non-ascii text
     sys.stdout.flush()
-
-
 
 
 if __name__ == '__main__':
