@@ -14,6 +14,7 @@ def google_auth_callback():
     """
     Route used by google to authenticate a user
     """
+    pass
 
 if __name__ == '__main__':
     app.run()
