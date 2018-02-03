@@ -3,8 +3,14 @@ import json
 import os
 import sys
 
-from flask import Flask, request, current_app, url_for
+from dotenv import load_dotenv
+from flask import Flask, request, current_app, url_for, redirect
 import requests
+from rauth import OAuth2Service
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
 
 
 class Config(object):
@@ -24,6 +30,7 @@ class OAuthSignIn(object):
         credentials = current_app.config['OAUTH_CREDENTIALS'][provider_name]
         self.consumer_id = credentials['id']
         self.consumer_secret = credentials['secret']
+        self.scope = ''
 
     def authorize(self):
         pass
@@ -37,6 +44,15 @@ class OAuthSignIn(object):
 
     @classmethod
     def get_provider(self, provider_name):
+        """
+
+        Args:
+            provider_name (str): The name of the provider
+
+        Returns:
+            OAuthSignIn: A subclass of OAuthSignIn
+
+        """
         if self.providers is None:
             self.providers = {}
             for provider_class in self.__subclasses__():
@@ -46,14 +62,50 @@ class OAuthSignIn(object):
 
 
 class GoogleSignIn(OAuthSignIn):
-    pass
+    def __init__(self):
+        super(GoogleSignIn, self).__init__('google')
+        self.service = OAuth2Service(
+            name='google',
+            client_id=self.consumer_id,
+            client_secret=self.consumer_secret,
+            authorize_url='https://accounts.google.com/o/oauth2/auth',
+            access_token_url='https://accounts.google.com/o/oauth/token',
+            base_url='https://www.googleapis.com/calendar/v3'
+        )
+        self.scope = 'https://www.googleapis.com/auth/calendar'
+
+    def authorize(self):
+        return redirect(self.service.get_authorize_url(
+            scope=self.scope,
+            response_type='code',
+            redirect_uri=self.get_callback_url()
+        ))
+
+    def callback(self):
+        print(request)
+
 
 
 app = Flask(__name__)
 app.config.from_object(Config())
 
+@app.route('/callback/<provider>')
+def oauth_callback(provider):
+    """
+    Route used by google to authenticate a user
+    """
+    oauth = OAuthSignIn.get_provider(provider)
+    oauth.callback()
 
-@app.route('/')
+
+@app.route('/authorize/google')
+def google_authorize():
+    # TODO: Check user is already signed in
+    oauth = OAuthSignIn.get_provider('google') # TODO: Other calendar providers
+    return oauth.authorize()
+
+
+@app.route('/', methods=['GET'])
 def index():
     # when the endpoint is registered as a webhook, it must echo back
     # the 'hub.challenge' value it receives in the query arguments
@@ -134,13 +186,7 @@ def log(msg, *args, **kwargs):  # simple wrapper for logging to stdout on heroku
     sys.stdout.flush()
 
 
-@app.route('/callback')
-def google_auth_callback():
-    """
-    Route used by google to authenticate a user
-    """
-    pass
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
