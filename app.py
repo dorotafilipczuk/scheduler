@@ -109,7 +109,7 @@ def oauth_callback(provider):
     """
     oauth = OAuthSignIn.get_provider(provider)
     oauth.callback()
-    return jsonify({'data': oauth.session.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%S+00:00'))).json()})
+    return jsonify({'data': oauth.session.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))).json()})
 
 
 @app.route('/authorize/<string:provider>/')
