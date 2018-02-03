@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+from pprint import pprint
 import os
 import re
 import sys
@@ -160,7 +161,7 @@ def index():
         if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
-
+    get_options()
     return "Hello world", 200
 
 
@@ -196,6 +197,53 @@ def webhook():
 
     return "ok", 200
 
+def sort_by_start_time(d):
+    return d["start"]
+
+def get_options():
+    data = []
+    for event in json.load(open('test_data/user1.json'))["events"]:
+        data.append(event)
+    for event in json.load(open('test_data/user2.json'))["events"]:
+        data.append(event)
+    now = datetime.now()
+
+    sorted_data = sorted(data, key=sort_by_start_time)
+
+    data = []
+    for event in sorted_data:
+        end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
+        if end > now:
+            data.append(event)
+
+    # Intermediate step
+    options = []
+    event1 = data[0]
+    i = 1
+    while i < len(data):
+        event2 = data[i]
+        end1 = event1["end"]
+        end2 = event2["end"]
+        start1 = event1["start"]
+        start2 = event2["start"]
+
+        if end2 > end1:
+            if start2 <= end1:
+                event1["end"] = end2
+            else:
+                options.append(end1)
+                event1 = event2
+
+        # TODO(dorotafilipczuk): Make sure that there are no options after
+        # 22:00. Add morning event options.
+        
+        i += 1
+
+    # Anything between 9:00 and 21:00.
+    #datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")"""
+
+    pprint(options)
+
 
 def send_message(recipient_id, message_text):
 
@@ -217,7 +265,6 @@ def send_message(recipient_id, message_text):
             {
               "content_type":"text",
               "title":"BUTTON_TEXT",
-              "image_url":"http://example.com/img/red.png",
               "payload":"STRING_SENT_TO_WEBHOOK"
             }]
         }
