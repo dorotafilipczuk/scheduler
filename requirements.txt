@@ -3,3 +3,4 @@ gunicorn
 requests
 python-dotenv
 rauth
+python-firebase

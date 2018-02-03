@@ -31,6 +31,7 @@ class OAuthSignIn(object):
         self.consumer_id = credentials['id']
         self.consumer_secret = credentials['secret']
         self.scope = ''
+        self.session = None
 
     def authorize(self):
         pass
@@ -108,7 +109,7 @@ def oauth_callback(provider):
     """
     oauth = OAuthSignIn.get_provider(provider)
     oauth.callback()
-    return jsonify({'data': oauth.session.request('/users/me/calendarList')})
+    return jsonify({'data': oauth.session.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%S+00:00'))).json()})
 
 
 @app.route('/authorize/<string:provider>/')
