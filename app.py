@@ -11,7 +11,7 @@ class Config(object):
     OAUTH_CREDENTIALS = {
         'google': {
             'id': os.environ['GOOGLE_ID'],
-            'secret': os.environ['GOOGLE']
+            'secret': os.environ['GOOGLE_SECRET']
         }
     }
 
