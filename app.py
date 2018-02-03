@@ -252,7 +252,7 @@ def format_options(options):
     i = 0;
     while i < length:
         print(options[i])
-        o = datetime.strptime(options[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M% on %d %B %Y")
+        o = datetime.strptime(options[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
         reformatted.append(o)
         i += 1
 
