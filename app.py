@@ -191,7 +191,7 @@ def get_options():
     event1 = data[0]
     i = 1
     while i < len(data):
-        event2 = data(i)
+        event2 = data[i]
         end1 = event1["end"]
         end2 = event2["end"]
         start1 = event1["start"]
@@ -202,12 +202,17 @@ def get_options():
                 event1["end"] = end2
             else:
                 options.append(end1)
+                event1 = event2
 
+        # TODO(dorotafilipczuk): Make sure that there are no options after
+        # 22:00. Add morning event options.
+        
+        i += 1
 
     # Anything between 9:00 and 21:00.
     #datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")"""
 
-    pprint(data)
+    pprint(options)
 
 
 def send_message(recipient_id, message_text):
