@@ -165,15 +165,15 @@ def send_message(recipient_id, message_text):
             "id": recipient_id
         },
         "message": {
-            "text": message_text
-        },
-        "quick_replies":[
-        {
-          "content_type":"text",
-          "title":"BUTTON_TEXT",
-          "image_url":"http://example.com/img/red.png",
-          "payload":"STRING_SENT_TO_WEBHOOK"
-        }]
+            "text": message_text,
+            "quick_replies":[
+            {
+              "content_type":"text",
+              "title":"BUTTON_TEXT",
+              "image_url":"http://example.com/img/red.png",
+              "payload":"STRING_SENT_TO_WEBHOOK"
+            }]
+        }
     })
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
     if r.status_code != 200:
