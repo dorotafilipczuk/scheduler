@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return Response(response='Hello World', status=200)
+    return Response(response='1661450931', status=200)
 
 
 @app.route('/callback')
