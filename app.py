@@ -35,6 +35,7 @@ class OAuthSignIn(object):
         self.consumer_id = credentials['id']
         self.consumer_secret = credentials['secret']
         self.scope = ''
+        self.session = None
 
     def authorize(self):
         pass
@@ -73,7 +74,7 @@ class GoogleSignIn(OAuthSignIn):
             client_id=self.consumer_id,
             client_secret=self.consumer_secret,
             authorize_url='https://accounts.google.com/o/oauth2/auth',
-            access_token_url='https://accounts.google.com/o/oauth/token',
+            access_token_url='https://accounts.google.com/o/oauth2/token',
             base_url='https://www.googleapis.com/calendar/v3'
         )
         self.scope = 'https://www.googleapis.com/auth/calendar'
@@ -86,25 +87,19 @@ class GoogleSignIn(OAuthSignIn):
         ))
 
     def callback(self):
-        def decode_json(payload):
-            return json.loads(payload.decode('utf-8'))
         error = request.args.get('error')
         if error is not None:
             pass  # User did not give us access
 
         code = request.args.get('code')
 
-        session = self.service.get_auth_session(
+        self.session = self.service.get_auth_session(
             data={'code': code,
                    'grant_type': 'authorization_code',
                    'redirect_uri': self.get_callback_url()
                     },
             decoder=json.loads
         )
-
-        temp = session.get('https://www.googleapis.com/calendar/v3/users/me/calendarList').json()
-        print(temp)
-
 
 
 app = Flask(__name__)
@@ -118,7 +113,7 @@ def oauth_callback(provider):
     """
     oauth = OAuthSignIn.get_provider(provider)
     oauth.callback()
-    return jsonify({'data': oauth.session.request('/users/me/calendarList')})
+    return jsonify({'data': oauth.session.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%S+00:00'))).json()})
 
 
 @app.route('/authorize/<string:provider>/')
@@ -159,7 +154,7 @@ def webhook():
                     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                     message_text = messaging_event["message"]["text"]  # the message's text
 
-                    send_message(sender_id, "roger that!")
+                    send_message(sender_id, json.dumps(data))
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
@@ -217,7 +212,7 @@ def get_options():
 
 def send_message(recipient_id, message_text):
 
-    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
+    #log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
 
     params = {
         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
