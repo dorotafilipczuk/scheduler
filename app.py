@@ -216,7 +216,6 @@ def get_options():
         if end > now:
             data.append(event)
 
-    # Intermediate step
     options = []
     event1 = data[0]
     i = 1
@@ -236,18 +235,21 @@ def get_options():
 
         # TODO(dorotafilipczuk): Make sure that there are no options after
         # 22:00. Add morning event options.
-        
+
         i += 1
 
     # Anything between 9:00 and 21:00.
     #datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")"""
 
-    pprint(options)
+    #pprint(options)
+    return options
 
 
 def send_message(recipient_id, message_text):
 
     #log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
+
+    options = get_options()
 
     params = {
         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
@@ -264,7 +266,7 @@ def send_message(recipient_id, message_text):
             "quick_replies":[
             {
               "content_type":"text",
-              "title":"BUTTON_TEXT",
+              "title": options[0]
               "payload":"STRING_SENT_TO_WEBHOOK"
             }]
         }
