@@ -258,12 +258,25 @@ def format_options(options):
 
     return reformatted
 
+def get_quick_replies():
+    quick_replies = []
+    options = get_options()
+    reformatted = format_options(options)
+    for option in reformatted:
+        quick_replies.append({
+          "content_type":"text",
+          "title": option,
+          "payload":"STRING_SENT_TO_WEBHOOK"
+        })
+
+    return quick_replies
+
+
 def send_message(recipient_id, message_text):
 
     #log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
 
-    options = get_options()
-    reformatted = format_options(options)
+    quick_replies = get_quick_replies()
 
     params = {
         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
@@ -277,12 +290,7 @@ def send_message(recipient_id, message_text):
         },
         "message": {
             "text": message_text,
-            "quick_replies":[
-            {
-              "content_type":"text",
-              "title": reformatted[0],
-              "payload":"STRING_SENT_TO_WEBHOOK"
-            }]
+            "quick_replies": quick_replies
         }
     })
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
