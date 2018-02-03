@@ -144,11 +144,6 @@ def webhook():
     data = request.get_json()
     log(data)  # you may not want to log every incoming message in production, but it's good for testing
 
-    # FIXME testing code
-    send_message(sender_id, json.dumps(data))
-    return "ok", 200
-
-
 
     if data["object"] == "page":
 
