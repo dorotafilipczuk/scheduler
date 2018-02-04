@@ -8,17 +8,17 @@ from app import *
 
 
 # Subclass fbchat.Client and override required methods
-class EchoBot(Client):
-    def onMessage(self, author_id, message_object, thread_id, thread_type, **kwargs):
-        self.markAsDelivered(author_id, thread_id)
-        self.markAsRead(author_id)
-
-        log.info("{} from {} in {}".format(message_object, thread_id, thread_type.name))
-
-
-        # If you're not the author, echo
-        if author_id != self.uid:
-            messageid = self.send(message_object, thread_id=thread_id, thread_type=thread_type)
+# class EchoBot(Client):
+#     def onMessage(self, author_id, message_object, thread_id, thread_type, **kwargs):
+#         self.markAsDelivered(author_id, thread_id)
+#         self.markAsRead(author_id)
+#
+#         log.info("{} from {} in {}".format(message_object, thread_id, thread_type.name))
+#
+#
+#         # If you're not the author, echo
+#         if author_id != self.uid:
+#             messageid = self.send(message_object, thread_id=thread_id, thread_type=thread_type)
 
 
 class ScheduleBot(Client):
@@ -77,7 +77,7 @@ class ScheduleBot(Client):
         #TODO(dorotafilipczuk): If length < 1, throw an exception.
 
         reformatted = []
-        i = 0;
+        i = 0
         while i < length:
             # print(options[i])
             o = datetime.strptime(options[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
@@ -106,7 +106,6 @@ class ScheduleBot(Client):
             us = list(filter(lambda u: u.uid != self.uid, self.fetchAllUsers()))
 
             notloggedin = users_logged_in(us)
-            notloggedin = list(filter(lambda u: u.uid != '580182890', notloggedin))
             print(notloggedin)
 
             if len(notloggedin) != 0:
@@ -148,11 +147,10 @@ class ScheduleBot(Client):
                                  event['end'] = event['end'] + 'T23:59:59Z'
                          calendar_events.append(event)
             #print(calendar_events)
-            for o in self.format_options(self.get_options(calendar_events)):
-                print(o)
+            options = self.format_options(self.get_options(calendar_events))
 
 
-            createPole(["It", "Works"])
+            createPole(options)
         self.setTypingStatus(TypingStatus.STOPPED, thread_id, thread_type)
 
 
