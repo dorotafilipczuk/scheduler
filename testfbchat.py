@@ -70,8 +70,8 @@ class ScheduleBot(Client):
 
     def format_options(self, options):
         length = len(options)
-        if length > 11:
-            length = 11
+        if length > 5:
+            length = 5
 
         #TODO(dorotafilipczuk): If length < 1, throw an exception.
 
@@ -84,7 +84,7 @@ class ScheduleBot(Client):
             i += 1
 
         return reformatted
-    
+
     def onPollUpdated(self, options, poll_id):
         print("please", maybe_finalize_meeting(options, filter(lambda u: u.uid != self.uid, self.fetchAllUsers())))
 
