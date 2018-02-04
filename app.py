@@ -19,19 +19,18 @@ if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 
 
-class Config(object):
-    OAUTH_CREDENTIALS = {
-        'google': {
-            'id': os.environ['GOOGLE_ID'],
-            'secret': os.environ['GOOGLE_SECRET']
-        }
+OAUTH_CREDENTIALS = {
+    'google': {
+        'id': os.environ['GOOGLE_ID'],
+        'secret': os.environ['GOOGLE_SECRET']
     }
+}
 
 EMAILS = {
     'alex.lloyd2504@gmail.com': 100001288458152,
     'bruno.manga95@gmail.com': 1011756013,
     'cris.gavril@gmail.com': 580182890,
-    'final email': 100001393607659 #################################### TODO
+    'dorota.test1@gmail.com': 100001393607659
 }
 
 
@@ -40,7 +39,7 @@ class OAuthSignIn(object):
 
     def __init__(self, provider_name):
         self.provider_name = provider_name
-        credentials = current_app.config['OAUTH_CREDENTIALS'][provider_name]
+        credentials = OAUTH_CREDENTIALS[provider_name]
         self.consumer_id = credentials['id']
         self.consumer_secret = credentials['secret']
         self.scope = ''
@@ -112,7 +111,6 @@ class GoogleSignIn(OAuthSignIn):
 
 
 app = Flask(__name__)
-app.config.from_object(Config())
 
 
 @app.route('/callback/<provider>/')

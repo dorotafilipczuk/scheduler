@@ -27,7 +27,7 @@ class ScheduleBot(Client):
     """
 
     WELCOME = "I am here to assist you. I'll help you schedule a meeting!"
-    USER_NOT_LOGGED_IN = "@{name} has not logged in. Goto https://hackathon-scheduler.herokuapp.com/authorize/google/ and sign in. @Chronomatch Bot me when this has been completed"
+    USER_NOT_LOGGED_IN = "{name} has not logged in. Goto URL and sign in. Mention me when this has been completed"
 
     def onPollUpdated(self, options, poll_id):
         print("please", maybe_finalize_meeting(options, filter(lambda u: u.uid != self.uid, self.fetchAllUsers())))
@@ -35,7 +35,7 @@ class ScheduleBot(Client):
 
     def onMessage(self, mid=None, author_id=None, message=None, message_object=None, thread_id=None,
                   thread_type=ThreadType.USER, ts=None, metadata=None, msg=None):
-        print("I have problems", message_object.text or "shit")
+
         self.markAsDelivered(author_id, thread_id)
         self.markAsRead(author_id)
 
@@ -46,19 +46,25 @@ class ScheduleBot(Client):
             self.send(Message(ScheduleBot.WELCOME), thread_id, thread_type)
             # check all user are in firebase
             # remove bot
-            us = filter(lambda u: u.uid != self.uid, self.fetchAllUsers())
+            us = list(filter(lambda u: u.uid != self.uid, self.fetchAllUsers()))
 
-            print("us is", us)
-            #notloggedin =  (us)
-            print("here")
-            #print(notloggedin)
+            notloggedin = users_logged_in(us)
+            notloggedin = list(filter(lambda u: u.uid != '580182890', notloggedin))
+            print(notloggedin)
 
+            if len(notloggedin) != 0:
+                for user in notloggedin:
+                    m = Message(ScheduleBot.USER_NOT_LOGGED_IN.format(name=user.name))
+
+                    self.send(m, thread_id=thread_id, thread_type=thread_type)
+                    time.sleep(0.2)
+                return
 
             calendar_events = []
             tokens = get_tokens(us)
             for t in tokens:
                 signin = GoogleSignIn()
-                signin.service.get_session(token=t).get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}&singleEvents=true'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))).json()
+                response = signin.service.get_session(token=t).get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}&singleEvents=true'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))).json()
                 if response.get('kind', '') == 'calendar#events':
                      for item in response['items']:
                          print(item)
@@ -85,6 +91,9 @@ class ScheduleBot(Client):
                                  event['end'] = event['end'] + 'T23:59:59Z'
                          calendar_events.append(event)
             print(calendar_events)
+
+
+
             createPole(["It", "Works"])
         self.setTypingStatus(TypingStatus.STOPPED, thread_id, thread_type)
 
