@@ -4,6 +4,7 @@ from firebase import firebase
 import time
 import os
 from app import *
+from datetime import datetime
 
 
 # Subclass fbchat.Client and override required methods
@@ -40,12 +41,13 @@ class ScheduleBot(Client):
         data = []
         for event in sorted_data:
             end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
-            # print(type(end))
             if end > now:
                 data.append(event)
 
         options = []
         event1 = data[0]
+        first_start = data[0]["start"]
+        last_end = data[len(data) - 1]["end"]
         i = 1
         while i < len(data):
             event2 = data[i]
@@ -69,9 +71,17 @@ class ScheduleBot(Client):
         return options
 
     def format_options(self, options):
-        length = len(options)
-        if length > 5:
-            length = 5
+        data1 = []
+        for opt in options:
+            odt = datetime.strptime(opt, "%Y-%m-%dT%H:%M:%SZ")
+            if odt.hour >= 9 and odt.hour < 22:
+                print(opt)
+                data1.append(opt)
+
+
+        length = len(data1)
+        if length > 11:
+            length = 11
 
         #TODO(dorotafilipczuk): If length < 1, throw an exception.
 
@@ -79,7 +89,7 @@ class ScheduleBot(Client):
         i = 0;
         while i < length:
             # print(options[i])
-            o = datetime.strptime(options[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
+            o = datetime.strptime(data1[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
             reformatted.append(o)
             i += 1
 
