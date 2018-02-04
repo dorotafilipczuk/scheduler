@@ -31,7 +31,7 @@ EMAILS = {
     'alex.lloyd2504@gmail.com': 100001288458152,
     'bruno.manga95@gmail.com': 1011756013,
     'cris.gavril@gmail.com': 580182890,
-    'final email': 100001393607659 #################################### TODO
+    'dorota.test1@gmail.com': 100001393607659 #################################### TODO
 }
 
 
