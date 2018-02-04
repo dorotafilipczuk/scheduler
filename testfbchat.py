@@ -57,10 +57,11 @@ class ScheduleBot(Client):
 
 
 def users_logged_in(users):
+    db = firebase.FirebaseApplication('https://schedule-03022018.firebaseio.com/', None)
     userList = []
     for user in users:
         uid = user.uid
-        u = f.get('/user', uid)
+        u = db.get('/user', uid)
         if u is  None:
             userList.append(user)
     return userList
