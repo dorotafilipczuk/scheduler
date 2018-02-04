@@ -1,0 +1,23 @@
+{
+  "name": "scheduler",
+  "version": "1.0.0",
+  "description": "1. Ensure python is installed\r 2. Ensure python-virtualenv is installed  (so you don't have to install python packages as root)",
+  "main": "createPoll.js",
+  "scripts": {
+    "start": "node createPoll.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dorotafilipczuk/scheduler.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dorotafilipczuk/scheduler/issues"
+  },
+  "homepage": "https://github.com/dorotafilipczuk/scheduler#readme",
+  "dependencies": {
+    "facebook-chat-api": "^1.4.0"
+  }
+}

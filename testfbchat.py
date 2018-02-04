@@ -1,7 +1,8 @@
 from fbchat import log, Client, ThreadType
-from fbchat.models import MessageReaction, User, Message
+from fbchat.models import MessageReaction, User, Message, TypingStatus
 from firebase import firebase
 import time
+import os
 
 
 # Subclass fbchat.Client and override required methods
@@ -19,15 +20,22 @@ class EchoBot(Client):
 
 
 class ScheduleBot(Client):
-    WELCOME = "You've called me. I'll help you schdule a meeting!"
-    USER_NOT_LOGGED_IN = "{name} has not logged in. Goto https://hackathon-scheduler.herokuapp.com/authorize/google/ and sign in. @Bot me when this has been completed"
+    """
+
+
+    """
+
+    WELCOME = "I am here to assist you. I'll help you schedule a meeting!"
+    USER_NOT_LOGGED_IN = "@{name} has not logged in. Goto https://hackathon-scheduler.herokuapp.com/authorize/google/ and sign in. @Chronomatch Bot me when this has been completed"
 
     def onMessage(self, mid=None, author_id=None, message=None, message_object=None, thread_id=None,
                   thread_type=ThreadType.USER, ts=None, metadata=None, msg=None):
         self.markAsDelivered(author_id, thread_id)
         self.markAsRead(author_id)
 
-        if '@Bot' in message_object.text and author_id != self.uid:
+        if '@Chronomatch Bot' in message_object.text and author_id != self.uid:
+            self.setTypingStatus(TypingStatus.TYPING, thread_id, thread_type)
+
             self.send(Message(ScheduleBot.WELCOME), thread_id, thread_type)
             # check all user are in firebase
             # remove bot
@@ -38,11 +46,14 @@ class ScheduleBot(Client):
 
             if len(notloggedin) != 0:
                 for user in notloggedin:
-                    m = Message(ScheduleBot.USER_NOT_LOGGED_IN.format(name=(user.firstname + ' ' + user.lastname)))
+                    m = Message(ScheduleBot.USER_NOT_LOGGED_IN.format(name=(user.name)))
 
                     self.send(m, thread_id=thread_id, thread_type=thread_type)
                     time.sleep(0.2)
                 return
+
+            createPole(["It", "Works"])
+        self.setTypingStatus(TypingStatus.STOPPED, thread_id, thread_type)
 
 
 def users_logged_in(users):
@@ -51,10 +62,17 @@ def users_logged_in(users):
     for user in users:
         uid = user.uid
         u = f.get('/user', uid)
-        if u is None:
-            userList.append(u)
+        if u is  None:
+            userList.append(user)
     return userList
 
+def createPole(options):
+    #options is list of strings
+    arguments = '"' + '" "'.join(options) + '"' ## TODO: Much hacky
+
+    command = 'npm run start ' + arguments
+
+    os.system(command)
 
 if __name__ == '__main__':
     client = ScheduleBot("dorota.test1@gmail.com", "b35tt3am")
