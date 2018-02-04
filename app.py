@@ -27,6 +27,13 @@ class Config(object):
         }
     }
 
+EMAILS = {
+    'alex.lloyd2504@gmail.com': 100001288458152,
+    'bruno.manga95@gmail.com': 1011756013,
+    'cris.gavril@gmail.com': 580182890,
+    'final email': 100001393607659 #################################### TODO
+}
+
 
 class OAuthSignIn(object):
     providers = None
@@ -79,7 +86,7 @@ class GoogleSignIn(OAuthSignIn):
             access_token_url='https://accounts.google.com/o/oauth2/token',
             base_url='https://www.googleapis.com/calendar/v3'
         )
-        self.scope = 'https://www.googleapis.com/auth/calendar'
+        self.scope = 'https://www.googleapis.com/auth/calendar email'
 
     def authorize(self):
         return redirect(self.service.get_authorize_url(
@@ -117,46 +124,54 @@ def oauth_callback(provider):
     oauth.callback()
 
     db = firebase.FirebaseApplication('https://schedule-03022018.firebaseio.com/', None)
-    result = db.post('/user', {
-        'username':'dorothy.filipczuk',
-        'access_token': oauth.session.access_token
-    })
-    #result = db.put('/user', 'access_token', oauth.session.access_token)
-    print(result)
+    # result = db.post('/user', {
+    #     'username':'dorothy.filipczuk',
+    #     'access_token': oauth.session.access_token
+    # })
+
+    # print(result)
 
     #print(oauth.session.access_token)
+    # [('Cristina Gavril', '580182890'), ('Alexander Lloyd', '100001288458152'), ('Dorota Filipczuk', ''),
+    #  ('Bruno Manganelli', '1011756013')]
 
-    response = oauth.session.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}&singleEvents=true'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))).json()
+    # response = oauth.session.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}&singleEvents=true'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))).json()
+    response = oauth.session.get('https://www.googleapis.com/plus/v1/people/me').json()
+    email = response['emails'][0]['value']
 
-    calendar_events = []
+    facebook_id = EMAILS[email]
+    result = db.put('/user', facebook_id, oauth.session.access_token)
 
-    if response.get('kind', '') == 'calendar#events':
-        for item in response['items']:
-            print(item)
-            event = {}
-            try:
-                event['start'] = item['start']['date']
-                if DATE_REGEX.fullmatch(event['start']) is not None:
-                    # Its a date
-                    event['start'] = event['start'] + 'T00:00:00Z'
-                event['end'] = item['end']['date']
-                if DATE_REGEX.fullmatch(event['end']) is not None:
-                    # Its a date
-                    event['end'] = event['end'] + 'T23:59:59Z'
+    # calendar_events = [] ## TODO: Move to chat bot
+    #
+    # if response.get('kind', '') == 'calendar#events':
+    #     for item in response['items']:
+    #         print(item)
+    #         event = {}
+    #         try:
+    #             event['start'] = item['start']['date']
+    #             if DATE_REGEX.fullmatch(event['start']) is not None:
+    #                 # Its a date
+    #                 event['start'] = event['start'] + 'T00:00:00Z'
+    #             event['end'] = item['end']['date']
+    #             if DATE_REGEX.fullmatch(event['end']) is not None:
+    #                 # Its a date
+    #                 event['end'] = event['end'] + 'T23:59:59Z'
+    #
+    #
+    #         except KeyError:
+    #             event['start'] = item['start']['dateTime']
+    #             if DATE_REGEX.fullmatch(event['start']) is not None:
+    #                 # Its a date
+    #                 event['start'] = event['start'] + 'T00:00:00Z'
+    #             event['end'] = item['end']['dateTime']
+    #             if DATE_REGEX.fullmatch(event['end']) is not None:
+    #                 # Its a date
+    #                 event['end'] = event['end'] + 'T23:59:59Z'
+    #         calendar_events.append(event)
 
-
-            except KeyError:
-                event['start'] = item['start']['dateTime']
-                if DATE_REGEX.fullmatch(event['start']) is not None:
-                    # Its a date
-                    event['start'] = event['start'] + 'T00:00:00Z'
-                event['end'] = item['end']['dateTime']
-                if DATE_REGEX.fullmatch(event['end']) is not None:
-                    # Its a date
-                    event['end'] = event['end'] + 'T23:59:59Z'
-            calendar_events.append(event)
-
-    return jsonify({'events': calendar_events}) #### Use the dict inside the parenthesis for dict
+    # return jsonify({'events': calendar_events}) #### Use the dict inside the parenthesis for dict
+    return "Thank you for logging in. Return back to Messenger"
 
 
 @app.route('/authorize/<string:provider>/')
@@ -226,7 +241,7 @@ def get_options():
     data = []
     for event in sorted_data:
         end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
-        print(type(end))
+        # print(type(end))
         if end > now:
             data.append(event)
 
@@ -264,7 +279,7 @@ def format_options(options):
     reformatted = []
     i = 0;
     while i < length:
-        print(options[i])
+        # print(options[i])
         o = datetime.strptime(options[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
         reformatted.append(o)
         i += 1
