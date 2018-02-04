@@ -2,6 +2,7 @@ from fbchat import log, Client, ThreadType
 from fbchat.models import MessageReaction, User, Message, TypingStatus
 from firebase import firebase
 import time
+from datetime import datetime
 import os
 from app import *
 
@@ -85,8 +86,8 @@ class ScheduleBot(Client):
 
         return reformatted
 
-    def onPollUpdated(self, options, poll_id):
-        print("please", maybe_finalize_meeting(options, filter(lambda u: u.uid != self.uid, self.fetchAllUsers())))
+    def onPollUpdated(self, options, thread_id, thread_type, poll_id):
+        print("please", self.maybe_finalize_meeting(thread_id, options,  map(lambda u: u.uid, filter(lambda u: u.uid != self.uid, self.fetchAllUsers()))))
 
 
     def onMessage(self, mid=None, author_id=None, message=None, message_object=None, thread_id=None,
@@ -155,16 +156,20 @@ class ScheduleBot(Client):
         self.setTypingStatus(TypingStatus.STOPPED, thread_id, thread_type)
 
 
-def maybe_finalize_meeting(poll_opts, all_users):
-    best_option = poll_opts[0]
-    users_voted = []
-    for option in poll_opts:
-        if option["total_count"] > best_option["total_count"]:
-            best_option = option
-        users_voted = list(set().union(users_voted, option["voters"]))
-    print ("best match is ", best_option)
-    print("users voted", users_voted)
-    return set(all_users) == set(users_voted)
+    def maybe_finalize_meeting(self, thread_id, poll_opts, all_users):
+        best_option = poll_opts[0]
+        users_voted = []
+        for option in poll_opts:
+            if option["total_count"] > best_option["total_count"]:
+                best_option = option
+            users_voted = list(set().union(users_voted, option["voters"]))
+        print ("best match is ", best_option)
+        print("users voted", users_voted)
+        print("all users", all_users)
+        if set(all_users) == set(users_voted):
+            dt = (datetime.now() - datetime(1970, 1, 1)).total_seconds()
+            self.eventReminder(thread_id, dt, "title")
+
 
 
 def users_logged_in(users):
