@@ -44,6 +44,7 @@ class ScheduleBot(Client):
             us = list(filter(lambda u: u.uid != self.uid, self.fetchAllUsers()))
 
             notloggedin = users_logged_in(us)
+            notloggedin = list(filter(lambda u: u.uid != '580182890', notloggedin))
             print(notloggedin)
 
             if len(notloggedin) != 0:
@@ -85,6 +86,9 @@ class ScheduleBot(Client):
                                  event['end'] = event['end'] + 'T23:59:59Z'
                          calendar_events.append(event)
             print(calendar_events)
+
+
+
             createPole(["It", "Works"])
         self.setTypingStatus(TypingStatus.STOPPED, thread_id, thread_type)
 
