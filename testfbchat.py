@@ -3,6 +3,7 @@ from fbchat.models import MessageReaction, User, Message, TypingStatus
 from firebase import firebase
 import time
 import os
+from app import *
 
 
 # Subclass fbchat.Client and override required methods
@@ -52,6 +53,37 @@ class ScheduleBot(Client):
                     time.sleep(0.2)
                 return
 
+            calendar_events = []
+            tokens = get_tokens(us)
+            for t in tokens:
+                signin = GoogleSignIn()
+                signin.service.get_session(token=t).get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}&singleEvents=true'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))).json()
+                if response.get('kind', '') == 'calendar#events':
+                     for item in response['items']:
+                         print(item)
+                         event = {}
+                         try:
+                             event['start'] = item['start']['date']
+                             if DATE_REGEX.fullmatch(event['start']) is not None:
+                                 # Its a date
+                                 event['start'] = event['start'] + 'T00:00:00Z'
+                             event['end'] = item['end']['date']
+                             if DATE_REGEX.fullmatch(event['end']) is not None:
+                                 # Its a date
+                                 event['end'] = event['end'] + 'T23:59:59Z'
+
+
+                         except KeyError:
+                             event['start'] = item['start']['dateTime']
+                             if DATE_REGEX.fullmatch(event['start']) is not None:
+                                 # Its a date
+                                 event['start'] = event['start'] + 'T00:00:00Z'
+                             event['end'] = item['end']['dateTime']
+                             if DATE_REGEX.fullmatch(event['end']) is not None:
+                                 # Its a date
+                                 event['end'] = event['end'] + 'T23:59:59Z'
+                         calendar_events.append(event)
+            print(calendar_events)
             createPole(["It", "Works"])
         self.setTypingStatus(TypingStatus.STOPPED, thread_id, thread_type)
 
@@ -65,6 +97,15 @@ def users_logged_in(users):
         if u is  None:
             userList.append(user)
     return userList
+
+def get_tokens(users):
+    db = firebase.FirebaseApplication('https://schedule-03022018.firebaseio.com/', None)
+    tokenList = []
+    for user in users:
+        uid = user.uid
+        u = db.get('/user', uid)
+        tokenList.append(u)
+    return tokenList
 
 def createPole(options):
     #options is list of strings
