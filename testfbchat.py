@@ -29,6 +29,62 @@ class ScheduleBot(Client):
     WELCOME = "I am here to assist you. I'll help you schedule a meeting!"
     USER_NOT_LOGGED_IN = "{name} has not logged in. Goto URL and sign in. Mention me when this has been completed"
 
+    def sort_by_start_time(self, d):
+        return d["start"]
+
+    def get_options(self, data):
+        now = datetime.now()
+
+        sorted_data = sorted(data, key=self.sort_by_start_time)
+
+        data = []
+        for event in sorted_data:
+            end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
+            # print(type(end))
+            if end > now:
+                data.append(event)
+
+        options = []
+        event1 = data[0]
+        i = 1
+        while i < len(data):
+            event2 = data[i]
+            end1 = event1["end"]
+            end2 = event2["end"]
+            start1 = event1["start"]
+            start2 = event2["start"]
+
+            if end2 > end1:
+                if start2 <= end1:
+                    event1["end"] = end2
+                else:
+                    options.append(end1)
+                    event1 = event2
+
+            # TODO(dorotafilipczuk): Make sure that there are no options after
+            # 22:00. Add morning event options.
+
+            i += 1
+
+        return options
+
+    def format_options(self, options):
+        length = len(options)
+        if length > 11:
+            length = 11
+
+        #TODO(dorotafilipczuk): If length < 1, throw an exception.
+
+        reformatted = []
+        i = 0;
+        while i < length:
+            # print(options[i])
+            o = datetime.strptime(options[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
+            reformatted.append(o)
+            i += 1
+
+        return reformatted
+
     def onMessage(self, mid=None, author_id=None, message=None, message_object=None, thread_id=None,
                   thread_type=ThreadType.USER, ts=None, metadata=None, msg=None):
         print("New Message: ", message_object)
@@ -85,8 +141,9 @@ class ScheduleBot(Client):
                                  # Its a date
                                  event['end'] = event['end'] + 'T23:59:59Z'
                          calendar_events.append(event)
-            print(calendar_events)
-
+            #print(calendar_events)
+            for o in self.format_options(self.get_options(calendar_events)):
+                print(o)
 
 
             createPole(["It", "Works"])
