@@ -39,7 +39,10 @@ class ScheduleBot(Client):
 
         data = []
         for event in sorted_data:
-            end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
+            try:
+                end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%S+01:00")
             # print(type(end))
             if end > now:
                 data.append(event)
@@ -95,6 +98,8 @@ class ScheduleBot(Client):
         self.markAsDelivered(author_id, thread_id)
         self.markAsRead(author_id)
 
+        if message_object.text is None:
+            message_object.text = ''
 
         if '@Chronomatch Bot' in message_object.text and author_id != self.uid:
             self.setTypingStatus(TypingStatus.TYPING, thread_id, thread_type)
