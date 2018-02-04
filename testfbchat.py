@@ -29,6 +29,8 @@ class ScheduleBot(Client):
 
     WELCOME = "I am here to assist you. I'll help you schedule a meeting!"
     USER_NOT_LOGGED_IN = "{name} has not logged in. Goto URL and sign in. Mention me when this has been completed"
+    SCHEDULED = "Lets meet at: {} ?"
+    THANKS = "Thank you for using ChronomatchBot!!"
 
     def sort_by_start_time(self, d):
         return d["start"]
@@ -171,7 +173,9 @@ class ScheduleBot(Client):
         print("all users", all_users)
         if set(all_users) == set(users_voted):
             dt = (datetime.now() - datetime(1970, 1, 1)).total_seconds()
-            self.eventReminder(thread_id, dt, "title")
+            # self.eventReminder(thread_id, dt, "title")
+            self.send(Message(ScheduleBot.SCHEDULED.format(best_option['text'])),thread_id=thread_id, thread_type=ThreadType.GROUP)
+            self.send(Message(ScheduleBot.THANKS), thread_id=thread_id, thread_type=ThreadType.GROUP)
 
 
 
