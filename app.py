@@ -116,7 +116,13 @@ def oauth_callback(provider):
     oauth = OAuthSignIn.get_provider(provider)
     oauth.callback()
 
-    firebase = firebase.FirebaseApplication('https://schedule-03022018.firebaseio.com/', None)
+    db = firebase.FirebaseApplication('https://schedule-03022018.firebaseio.com/', None)
+    result = db.post('/user', {
+        'username':'dorothy.filipczuk',
+        'access_token': oauth.session.access_token
+    })
+    #result = db.put('/user', 'access_token', oauth.session.access_token)
+    print(result)
 
     #print(oauth.session.access_token)
 
