@@ -213,6 +213,7 @@ def get_options():
     data = []
     for event in sorted_data:
         end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
+        print(type(end))
         if end > now:
             data.append(event)
 
@@ -238,18 +239,44 @@ def get_options():
 
         i += 1
 
-    # Anything between 9:00 and 21:00.
-    #datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")"""
-
-    #pprint(options)
     return options
+
+def format_options(options):
+    length = len(options)
+    if length > 11:
+        length = 11
+
+    #TODO(dorotafilipczuk): If length < 1, throw an exception.
+
+    reformatted = []
+    i = 0;
+    while i < length:
+        print(options[i])
+        o = datetime.strptime(options[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
+        reformatted.append(o)
+        i += 1
+
+    return reformatted
+
+def get_quick_replies():
+    quick_replies = []
+    options = get_options()
+    reformatted = format_options(options)
+    for option in reformatted:
+        quick_replies.append({
+          "content_type":"text",
+          "title": option,
+          "payload":"STRING_SENT_TO_WEBHOOK"
+        })
+
+    return quick_replies
 
 
 def send_message(recipient_id, message_text):
 
     #log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
 
-    options = get_options()
+    quick_replies = get_quick_replies()
 
     params = {
         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
@@ -263,12 +290,7 @@ def send_message(recipient_id, message_text):
         },
         "message": {
             "text": message_text,
-            "quick_replies":[
-            {
-              "content_type":"text",
-              "title": options[0],
-              "payload":"STRING_SENT_TO_WEBHOOK"
-            }]
+            "quick_replies": quick_replies
         }
     })
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
