@@ -115,9 +115,11 @@ class ScheduleBot(Client):
             message_object.text = ''
 
         if (('@Chronomatch Bot' in message_object.text) or likely_request(message_object.text)) and author_id != self.uid:
+            self.reactToMessage(mid, MessageReaction.LOVE)
+            self.send(Message(ScheduleBot.WELCOME), thread_id, thread_type)
+            
             self.setTypingStatus(TypingStatus.TYPING, thread_id, thread_type)
 
-            self.send(Message(ScheduleBot.WELCOME), thread_id, thread_type)
             # check all user are in firebase
             # remove bot
             us = list(filter(lambda u: u.uid != self.uid, self.fetchAllUsers()))
