@@ -223,6 +223,7 @@ def createPole(options):
     os.system(command)
 
 def likely_request(str):
+    str = str.lower()
     meeting = ("meet" in str) or ("meeting" in str)
     coming = ("next week" in str) or ("soon" in str)
     question = ("do" in str) or ("can" in str)
