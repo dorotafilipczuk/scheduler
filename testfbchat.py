@@ -2,23 +2,24 @@ from fbchat import log, Client, ThreadType
 from fbchat.models import MessageReaction, User, Message, TypingStatus
 from firebase import firebase
 import time
+from datetime import datetime
 import os
 from app import *
 from datetime import datetime
 
 
 # Subclass fbchat.Client and override required methods
-class EchoBot(Client):
-    def onMessage(self, author_id, message_object, thread_id, thread_type, **kwargs):
-        self.markAsDelivered(author_id, thread_id)
-        self.markAsRead(author_id)
-
-        log.info("{} from {} in {}".format(message_object, thread_id, thread_type.name))
-
-
-        # If you're not the author, echo
-        if author_id != self.uid:
-            messageid = self.send(message_object, thread_id=thread_id, thread_type=thread_type)
+# class EchoBot(Client):
+#     def onMessage(self, author_id, message_object, thread_id, thread_type, **kwargs):
+#         self.markAsDelivered(author_id, thread_id)
+#         self.markAsRead(author_id)
+#
+#         log.info("{} from {} in {}".format(message_object, thread_id, thread_type.name))
+#
+#
+#         # If you're not the author, echo
+#         if author_id != self.uid:
+#             messageid = self.send(message_object, thread_id=thread_id, thread_type=thread_type)
 
 
 class ScheduleBot(Client):
@@ -29,6 +30,8 @@ class ScheduleBot(Client):
 
     WELCOME = "I am here to assist you. I'll help you schedule a meeting!"
     USER_NOT_LOGGED_IN = "{name} has not logged in. Goto URL and sign in. Mention me when this has been completed"
+    SCHEDULED = "Lets meet at: {} ?"
+    THANKS = "Thank you for using ChronomatchBot!!"
 
     def sort_by_start_time(self, d):
         return d["start"]
@@ -40,7 +43,10 @@ class ScheduleBot(Client):
 
         data = []
         for event in sorted_data:
-            end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
+            try:
+                end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%S+01:00")
             if end > now:
                 data.append(event)
 
@@ -86,7 +92,7 @@ class ScheduleBot(Client):
         #TODO(dorotafilipczuk): If length < 1, throw an exception.
 
         reformatted = []
-        i = 0;
+        i = 0
         while i < length:
             # print(options[i])
             o = datetime.strptime(data1[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
@@ -95,8 +101,8 @@ class ScheduleBot(Client):
 
         return reformatted
 
-    def onPollUpdated(self, options, poll_id):
-        print("please", maybe_finalize_meeting(options, filter(lambda u: u.uid != self.uid, self.fetchAllUsers())))
+    def onPollUpdated(self, options, thread_id, thread_type, poll_id):
+        print("please", self.maybe_finalize_meeting(thread_id, options,  map(lambda u: u.uid, filter(lambda u: u.uid != self.uid, self.fetchAllUsers()))))
 
 
     def onMessage(self, mid=None, author_id=None, message=None, message_object=None, thread_id=None,
@@ -105,6 +111,8 @@ class ScheduleBot(Client):
         self.markAsDelivered(author_id, thread_id)
         self.markAsRead(author_id)
 
+        if message_object.text is None:
+            message_object.text = ''
 
         if '@Chronomatch Bot' in message_object.text and author_id != self.uid:
             self.setTypingStatus(TypingStatus.TYPING, thread_id, thread_type)
@@ -115,7 +123,6 @@ class ScheduleBot(Client):
             us = list(filter(lambda u: u.uid != self.uid, self.fetchAllUsers()))
 
             notloggedin = users_logged_in(us)
-            notloggedin = list(filter(lambda u: u.uid != '580182890', notloggedin))
             print(notloggedin)
 
             if len(notloggedin) != 0:
@@ -157,24 +164,29 @@ class ScheduleBot(Client):
                                  event['end'] = event['end'] + 'T23:59:59Z'
                          calendar_events.append(event)
             #print(calendar_events)
-            for o in self.format_options(self.get_options(calendar_events)):
-                print(o)
+            options = self.format_options(self.get_options(calendar_events))
 
 
-            createPole(["It", "Works"])
+            createPole(options)
         self.setTypingStatus(TypingStatus.STOPPED, thread_id, thread_type)
 
 
-def maybe_finalize_meeting(poll_opts, all_users):
-    best_option = poll_opts[0]
-    users_voted = []
-    for option in poll_opts:
-        if option["total_count"] > best_option["total_count"]:
-            best_option = option
-        users_voted = list(set().union(users_voted, option["voters"]))
-    print ("best match is ", best_option)
-    print("users voted", users_voted)
-    return set(all_users) == set(users_voted)
+    def maybe_finalize_meeting(self, thread_id, poll_opts, all_users):
+        best_option = poll_opts[0]
+        users_voted = []
+        for option in poll_opts:
+            if option["total_count"] > best_option["total_count"]:
+                best_option = option
+            users_voted = list(set().union(users_voted, option["voters"]))
+        print ("best match is ", best_option)
+        print("users voted", users_voted)
+        print("all users", all_users)
+        if set(all_users) == set(users_voted):
+            dt = (datetime.now() - datetime(1970, 1, 1)).total_seconds()
+            # self.eventReminder(thread_id, dt, "title")
+            self.send(Message(ScheduleBot.SCHEDULED.format(best_option['text'])),thread_id=thread_id, thread_type=ThreadType.GROUP)
+            self.send(Message(ScheduleBot.THANKS), thread_id=thread_id, thread_type=ThreadType.GROUP)
+
 
 
 def users_logged_in(users):
