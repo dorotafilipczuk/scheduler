@@ -79,7 +79,10 @@ class ScheduleBot(Client):
     def format_options(self, options):
         data1 = []
         for opt in options:
-            odt = datetime.strptime(opt, "%Y-%m-%dT%H:%M:%SZ")
+            try:
+                odt = datetime.strptime(opt, "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                odt = datetime.strptime(opt, "%Y-%m-%dT%H:%M:%S+01:00")
             if odt.hour >= 9 and odt.hour < 22:
                 print(opt)
                 data1.append(opt)
