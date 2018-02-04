@@ -30,7 +30,10 @@ class ScheduleBot(Client):
         if '@Bot' in message_object.text and author_id != self.uid:
             self.send(Message(ScheduleBot.WELCOME), thread_id, thread_type)
             # check all user are in firebase
-            notloggedin = users_logged_in(self.fetchAllUsers())
+            # remove bot
+            us = filter(lambda u: u.uid != self.uid, self.fetchAllUsers())
+
+            notloggedin = users_logged_in(us)
             print(notloggedin)
 
             if len(notloggedin) != 0:
@@ -42,23 +45,15 @@ class ScheduleBot(Client):
                 return
 
 
-
-
-
-
 def users_logged_in(users):
     userList = []
     f=firebase.FirebaseApplication('https://schedule-03022018.firebaseio.com/',None)
     for user in users:
         uid = user.uid
-        u = f.get('/users', uid)
+        u = f.get('/user', uid)
         if u is None:
             userList.append(u)
     return userList
-
-
-
-
 
 
 if __name__ == '__main__':
