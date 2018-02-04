@@ -29,7 +29,7 @@ class ScheduleBot(Client):
     WELCOME = "I am here to assist you. I'll help you schedule a meeting!"
     USER_NOT_LOGGED_IN = "@{name} has not logged in. Goto https://hackathon-scheduler.herokuapp.com/authorize/google/ and sign in. @Chronomatch Bot me when this has been completed"
 
-    def onPollUpdated(self, options):
+    def onPollUpdated(self, options, poll_id):
         print("please", maybe_finalize_meeting(options, filter(lambda u: u.uid != self.uid, self.fetchAllUsers())))
 
 
@@ -41,9 +41,9 @@ class ScheduleBot(Client):
 
 
         if '@Chronomatch Bot' in message_object.text and author_id != self.uid:
-            #self.setTypingStatus(TypingStatus.TYPING, thread_id, thread_type)
+            self.setTypingStatus(TypingStatus.TYPING, thread_id, thread_type)
 
-            #self.send(Message(ScheduleBot.WELCOME), thread_id, thread_type)
+            self.send(Message(ScheduleBot.WELCOME), thread_id, thread_type)
             # check all user are in firebase
             # remove bot
             us = filter(lambda u: u.uid != self.uid, self.fetchAllUsers())
@@ -52,8 +52,6 @@ class ScheduleBot(Client):
             #notloggedin =  (us)
             print("here")
             #print(notloggedin)
-            createPole(["It", "Works"])
-        #self.setTypingStatus(TypingStatus.STOPPED, thread_id, thread_type)
 
 
             calendar_events = []
