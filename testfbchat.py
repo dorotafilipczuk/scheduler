@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 import os
 from app import *
+from datetime import datetime
 
 
 # Subclass fbchat.Client and override required methods
@@ -29,6 +30,8 @@ class ScheduleBot(Client):
 
     WELCOME = "I am here to assist you. I'll help you schedule a meeting!"
     USER_NOT_LOGGED_IN = "{name} has not logged in. Goto URL and sign in. Mention me when this has been completed"
+    SCHEDULED = "Lets meet at: {} ?"
+    THANKS = "Thank you for using ChronomatchBot!!"
 
     def sort_by_start_time(self, d):
         return d["start"]
@@ -40,13 +43,17 @@ class ScheduleBot(Client):
 
         data = []
         for event in sorted_data:
-            end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
-            # print(type(end))
+            try:
+                end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                end = datetime.strptime(event["end"], "%Y-%m-%dT%H:%M:%S+01:00")
             if end > now:
                 data.append(event)
 
         options = []
         event1 = data[0]
+        first_start = data[0]["start"]
+        last_end = data[len(data) - 1]["end"]
         i = 1
         while i < len(data):
             event2 = data[i]
@@ -70,9 +77,17 @@ class ScheduleBot(Client):
         return options
 
     def format_options(self, options):
-        length = len(options)
-        if length > 5:
-            length = 5
+        data1 = []
+        for opt in options:
+            odt = datetime.strptime(opt, "%Y-%m-%dT%H:%M:%SZ")
+            if odt.hour >= 9 and odt.hour < 22:
+                print(opt)
+                data1.append(opt)
+
+
+        length = len(data1)
+        if length > 11:
+            length = 11
 
         #TODO(dorotafilipczuk): If length < 1, throw an exception.
 
@@ -80,7 +95,7 @@ class ScheduleBot(Client):
         i = 0
         while i < length:
             # print(options[i])
-            o = datetime.strptime(options[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
+            o = datetime.strptime(data1[i], "%Y-%m-%dT%H:%M:%SZ").strftime("%H:%M on %d %b %Y")
             reformatted.append(o)
             i += 1
 
@@ -96,6 +111,8 @@ class ScheduleBot(Client):
         self.markAsDelivered(author_id, thread_id)
         self.markAsRead(author_id)
 
+        if message_object.text is None:
+            message_object.text = ''
 
         if (('@Chronomatch Bot' in message_object.text) or likely_request(message_object.text)) and author_id != self.uid:
             self.setTypingStatus(TypingStatus.TYPING, thread_id, thread_type)
@@ -166,7 +183,9 @@ class ScheduleBot(Client):
         print("all users", all_users)
         if set(all_users) == set(users_voted):
             dt = (datetime.now() - datetime(1970, 1, 1)).total_seconds()
-            self.eventReminder(thread_id, dt, "title")
+            # self.eventReminder(thread_id, dt, "title")
+            self.send(Message(ScheduleBot.SCHEDULED.format(best_option['text'])),thread_id=thread_id, thread_type=ThreadType.GROUP)
+            self.send(Message(ScheduleBot.THANKS), thread_id=thread_id, thread_type=ThreadType.GROUP)
 
 
 
