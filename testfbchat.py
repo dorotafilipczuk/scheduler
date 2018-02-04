@@ -97,7 +97,7 @@ class ScheduleBot(Client):
         self.markAsRead(author_id)
 
 
-        if '@Chronomatch Bot' in message_object.text and author_id != self.uid:
+        if (('@Chronomatch Bot' in message_object.text) or likely_request(message_object.text)) and author_id != self.uid:
             self.setTypingStatus(TypingStatus.TYPING, thread_id, thread_type)
 
             self.send(Message(ScheduleBot.WELCOME), thread_id, thread_type)
@@ -197,6 +197,13 @@ def createPole(options):
     command = 'npm run start ' + arguments
 
     os.system(command)
+
+def likely_request(str):
+    meeting = ("meet" in str) or ("meeting" in str)
+    coming = ("next week" in str) or ("soon" in str)
+    question = ("do" in str) or ("can" in str)
+    us = ("you" in str) or ("we" in str)
+    return meeting and coming and question and us
 
 if __name__ == '__main__':
     client = ScheduleBot("dorota.test1@gmail.com", "b35tt3am")
