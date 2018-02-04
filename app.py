@@ -10,6 +10,8 @@ from flask import Flask, request, current_app, url_for, redirect, jsonify
 import requests
 from rauth import OAuth2Service
 
+from firebase import firebase
+
 DATE_REGEX = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -113,6 +115,11 @@ def oauth_callback(provider):
     """
     oauth = OAuthSignIn.get_provider(provider)
     oauth.callback()
+
+    firebase = firebase.FirebaseApplication('https://schedule-03022018.firebaseio.com/', None)
+
+    #print(oauth.session.access_token)
+
     response = oauth.session.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin={}&singleEvents=true'.format(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))).json()
 
     calendar_events = []
