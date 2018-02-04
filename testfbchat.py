@@ -84,12 +84,17 @@ class ScheduleBot(Client):
             i += 1
 
         return reformatted
+    
+    def onPollUpdated(self, options, poll_id):
+        print("please", maybe_finalize_meeting(options, filter(lambda u: u.uid != self.uid, self.fetchAllUsers())))
+
 
     def onMessage(self, mid=None, author_id=None, message=None, message_object=None, thread_id=None,
                   thread_type=ThreadType.USER, ts=None, metadata=None, msg=None):
-        print("New Message: ", message_object)
+
         self.markAsDelivered(author_id, thread_id)
         self.markAsRead(author_id)
+
 
         if '@Chronomatch Bot' in message_object.text and author_id != self.uid:
             self.setTypingStatus(TypingStatus.TYPING, thread_id, thread_type)
@@ -150,9 +155,22 @@ class ScheduleBot(Client):
         self.setTypingStatus(TypingStatus.STOPPED, thread_id, thread_type)
 
 
+def maybe_finalize_meeting(poll_opts, all_users):
+    best_option = poll_opts[0]
+    users_voted = []
+    for option in poll_opts:
+        if option["total_count"] > best_option["total_count"]:
+            best_option = option
+        users_voted = list(set().union(users_voted, option["voters"]))
+    print ("best match is ", best_option)
+    print("users voted", users_voted)
+    return set(all_users) == set(users_voted)
+
+
 def users_logged_in(users):
     db = firebase.FirebaseApplication('https://schedule-03022018.firebaseio.com/', None)
     userList = []
+    f = firebase.FirebaseApplication('https://schedule-03022018.firebaseio.com/', None)
     for user in users:
         uid = user.uid
         u = db.get('/user', uid)
