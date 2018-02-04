@@ -171,7 +171,7 @@ def oauth_callback(provider):
     #         calendar_events.append(event)
 
     # return jsonify({'events': calendar_events}) #### Use the dict inside the parenthesis for dict
-    return jsonify(response)
+    return "Thank you for logging in. Return back to Messenger"
 
 
 @app.route('/authorize/<string:provider>/')
